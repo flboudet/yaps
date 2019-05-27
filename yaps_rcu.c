@@ -12,7 +12,7 @@ cell_ptr_t alloc(cellpool_t *pool)
     do {
         position = atomic_fetch_add(&(pool->next), 1) % pool->poolSize;
         result = &(pool->pool[position]);
-        //printf("iterate: pool=%d, rctr=%d\n", position, result->rctr);
+        //printf("iterate: pool=%zu, rctr=%d\n", position, result->rctr);
         //ANNOTATE_HAPPENS_BEFORE(&(result->rctr));
         //} while (! (result->rctr == 0));
         //result->rctr = 2;
@@ -33,6 +33,7 @@ void set(variable_t *v, int newValue)
     atomic_cell_ptr_t nc = alloc(v->pool);
     nc->value = newValue;
     if (c != NULL) {
+        //printf("Cell will be released\n");
         // Mark as released
         //VALGRIND_HG_CLEAN_MEMORY(&(nc->value), sizeof(nc->value));
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
@@ -44,10 +45,11 @@ void set(variable_t *v, int newValue)
 int get(variable_t *v)
 {
     atomic_cell_ptr_t c;
-    atomic_fetch_add(&(v->c->rctr), 1); // Protect readers
     atomic_store(&c, v->c); // must be atomic
+    atomic_fetch_add(&(c->rctr), 1); // Protect readers
+
     int result = c->value;
-    atomic_fetch_sub(&(v->c->rctr), 1); // End of protected section
+    atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     return result;
 }
 
@@ -55,6 +57,7 @@ void initVariable(variable_t *v, cellpool_t *pool)
 {
     v->c = ATOMIC_VAR_INIT(NULL);
     v->pool = pool;
+    //printf("cell: %p\n", v->c);
 }
 
 void initPool(cellpool_t *pool, size_t nmemb)
@@ -65,5 +68,12 @@ void initPool(cellpool_t *pool, size_t nmemb)
     for (size_t i = 0 ; i < nmemb ; ++i) {
         pool->pool[i].rctr = ATOMIC_VAR_INIT(0);
         pool->pool[i].obsolete = ATOMIC_VAR_INIT(1);
+    }
+}
+
+void dumpPool(cellpool_t *pool)
+{
+    for (size_t i = 0 ; i < pool->poolSize ; ++i) {
+        printf("dump: pool=%zu, rctr=%d\n", i, pool->pool[i].rctr);
     }
 }
