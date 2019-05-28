@@ -29,7 +29,7 @@ void watchVariable(variable_t *v, int start, int max) {
             wval = ::get(v);
         }
         //printf("wval: %d\n", wval);
-        ASSERT_TRUE(pwval <= wval);
+        ASSERT_LE(pwval,  wval);
         pwval = wval;
     } while (wval != max);
 }
@@ -56,12 +56,14 @@ TEST(MultithreadTest, TwoVariables)
 {
     variable_t toto, titi;
     cellpool_t totoPool;
+    cellpool_t totoPool2;
     initPool(&totoPool, 80);
+    initPool(&totoPool2, 80);
     initVariable(&toto, &totoPool);
     initVariable(&titi, &totoPool);
 
     ::set(&toto, 0);
-    ::set(&titi, 6666);
+    ::set(&titi, 666);
 
     //iterateOnVariable(&toto, 0, 1000);
     std::thread iterateOnToto(iterateOnVariable, &toto, 0, 1000);

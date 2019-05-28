@@ -7,6 +7,7 @@ using namespace std;
 #endif
 
 #include <stddef.h>
+#include <pthread.h>
 
 struct cell {
     int value;
@@ -22,6 +23,8 @@ struct cellpool {
     cell_ptr_t pool;
     size_t poolSize;
     atomic_size_t next;
+    atomic_uint mutex;
+    pthread_mutex_t ptmutex;
 };
 
 typedef struct cellpool cellpool_t;
@@ -29,6 +32,8 @@ typedef struct cellpool cellpool_t;
 struct variable {
     atomic_cell_ptr_t c;
     cellpool_t *pool;
+    atomic_uint mutex;
+    pthread_mutex_t ptmutex;
 };
 
 typedef struct variable variable_t;
