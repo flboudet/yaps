@@ -80,6 +80,37 @@ TEST(MultithreadTest, TwoVariables)
     ASSERT_EQ(9999, get(&titi));
 }
 
+TEST(MultithreadTest, NVariablesOnePool)
+{
+    int nbV = 100;
+    variable_t variables[nbV];
+    cellpool_t uniquePool;
+    initPool(&uniquePool, nbV*10);
+    for (int i = 0 ; i < nbV ; ++i) {
+        initVariable(&variables[i], &uniquePool);
+        ::set(&variables[i], 0);
+    }
+
+    std::vector<std::thread> iterateThreads;
+    std::vector<std::thread> watchThreads;
+    for (int i = 0 ; i < nbV ; ++i) {
+        int min = i*100;
+        int max = min + 1000;
+        iterateThreads.push_back(std::thread(iterateOnVariable, &variables[i], min, max));
+        watchThreads.push_back(std::thread(watchVariable, &variables[i], min, max - 1));
+    }
+    for (std::thread &t : iterateThreads)
+        t.join();
+    for (std::thread &t : watchThreads)
+        t.join();
+
+    for (int i = 0 ; i < nbV ; ++i) {
+        int min = i*100;
+        int max = min + 1000;
+        ASSERT_EQ(max - 1, get(&variables[i]));
+    }
+}
+
 TEST(PoolAlloc, Toto)
 {
     cellpool_t totoPool;
