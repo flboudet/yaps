@@ -3,6 +3,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define TAKE_SPINLOCK(mutex) {                               \
+        atomic_uint zero = 0;                                \
+        while (! atomic_compare_exchange_strong(&(mutex),    \
+                                                &zero, 1)) { \
+            zero = 0;                                        \
+        }                                                    \
+    }
+
+#define RELEASE_SPINLOCK(mutex) { \
+        mutex = 0;                \
+    }
+
 cell_ptr_t alloc(cellpool_t *pool)
 {
     size_t position;
@@ -24,30 +36,33 @@ void set(variable_t *v, int newValue)
     atomic_cell_ptr_t nc = alloc(v->pool);
 
     nc->value = newValue;
+
     // per-variable mutex
-    while (! atomic_compare_exchange_strong(&(v->mutex), &zero, 1)) {
-        zero = 0;
-    }
+    TAKE_SPINLOCK(v->mutex);
+
     atomic_store(&c, v->c); // should be atomic?
     if (c != NULL) {
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
     atomic_store(&(v->c), nc); // must be atomic
-    v->mutex = 0;
+
+    RELEASE_SPINLOCK(v->mutex);
 }
 
 int get(variable_t *v)
 {
     atomic_uint zero = 0;
     atomic_cell_ptr_t c;
+
     // per-variable mutex
-    while (! atomic_compare_exchange_strong(&(v->mutex), &zero, 1)) {
-        zero = 0;
-    }
+    TAKE_SPINLOCK(v->mutex);
+
     atomic_store(&c, v->c); // must be atomic
     atomic_fetch_add(&(c->rctr), 1); // Protect readers
-    v->mutex = 0;
+
+    RELEASE_SPINLOCK(v->mutex);
+
     int result = c->value;
     atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     return result;
@@ -60,7 +75,7 @@ void initVariable(variable_t *v, cellpool_t *pool)
     v->mutex = ATOMIC_VAR_INIT(0);
 }
 
-void initPool(cellpool_t *pool, cell_ptr_t *cell_memory, size_t nmemb)
+void initPool(cellpool_t *pool, cell_ptr_t cell_memory, size_t nmemb)
 {
     pool->pool = cell_memory;
     pool->poolSize = nmemb;
@@ -73,7 +88,7 @@ void initPool(cellpool_t *pool, cell_ptr_t *cell_memory, size_t nmemb)
 
 void allocInitPool(cellpool_t *pool, size_t nmemb)
 {
-    cell_ptr_t *cell_memory = calloc(nmemb, sizeof(cell_t));
+    cell_ptr_t cell_memory = calloc(nmemb, sizeof(cell_t));
     initPool(pool, cell_memory, nmemb);
 }
 
