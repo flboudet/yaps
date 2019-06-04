@@ -60,15 +60,21 @@ void initVariable(variable_t *v, cellpool_t *pool)
     v->mutex = ATOMIC_VAR_INIT(0);
 }
 
-void initPool(cellpool_t *pool, size_t nmemb)
+void initPool(cellpool_t *pool, cell_ptr_t *cell_memory, size_t nmemb)
 {
-    pool->pool = calloc(nmemb, sizeof(cell_t));
+    pool->pool = cell_memory;
     pool->poolSize = nmemb;
     pool->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
         pool->pool[i].rctr = ATOMIC_VAR_INIT(0);
         pool->pool[i].obsolete = ATOMIC_VAR_INIT(1);
     }
+}
+
+void allocInitPool(cellpool_t *pool, size_t nmemb)
+{
+    cell_ptr_t *cell_memory = calloc(nmemb, sizeof(cell_t));
+    initPool(pool, cell_memory, nmemb);
 }
 
 void dumpPool(cellpool_t *pool)

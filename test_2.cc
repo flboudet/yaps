@@ -39,7 +39,7 @@ TEST(MultithreadTest, SingleVariable)
 {
     variable_t toto;
     cellpool_t totoPool;
-    initPool(&totoPool, 80);
+    allocInitPool(&totoPool, 80);
     initVariable(&toto, &totoPool);
 
     ::set(&toto, 0);
@@ -57,8 +57,8 @@ TEST(MultithreadTest, TwoVariables)
     variable_t toto, titi;
     cellpool_t totoPool;
     cellpool_t totoPool2;
-    initPool(&totoPool, 80);
-    initPool(&totoPool2, 80);
+    allocInitPool(&totoPool, 80);
+    allocInitPool(&totoPool2, 80);
     initVariable(&toto, &totoPool);
     initVariable(&titi, &totoPool);
 
@@ -85,7 +85,7 @@ TEST(MultithreadTest, NVariablesOnePool)
     int nbV = 100;
     variable_t variables[nbV];
     cellpool_t uniquePool;
-    initPool(&uniquePool, nbV*10);
+    allocInitPool(&uniquePool, nbV*10);
     for (int i = 0 ; i < nbV ; ++i) {
         initVariable(&variables[i], &uniquePool);
         ::set(&variables[i], 0);
@@ -116,8 +116,8 @@ TEST(PoolAlloc, Toto)
     cellpool_t totoPool;
     variable_t toto, titi;
 
-    std::cout << "*** initPool" << std::endl;
-    initPool(&totoPool, 20);
+    std::cout << "*** allocInitPool" << std::endl;
+    allocInitPool(&totoPool, 20);
     dumpPool(&totoPool);
 
     std::cout << "*** initVariable(toto)" << std::endl;
