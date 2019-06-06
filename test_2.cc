@@ -34,13 +34,12 @@ void watchVariable(variable_t *v, int start, int max) {
     } while (wval != max);
 }
 
-
 TEST(MultithreadTest, SingleVariable)
 {
     variable_t toto;
-    cellpool_t totoPool;
-    allocInitPool(&totoPool, 80);
-    initVariable(&toto, &totoPool);
+    cellpool_t *totoPool;
+    totoPool = allocInitPool(80);
+    initVariable(&toto, totoPool);
 
     ::set(&toto, 0);
 
@@ -55,12 +54,12 @@ TEST(MultithreadTest, SingleVariable)
 TEST(MultithreadTest, TwoVariables)
 {
     variable_t toto, titi;
-    cellpool_t totoPool;
-    cellpool_t totoPool2;
-    allocInitPool(&totoPool, 80);
-    allocInitPool(&totoPool2, 80);
-    initVariable(&toto, &totoPool);
-    initVariable(&titi, &totoPool);
+    cellpool_t *totoPool;
+    cellpool_t *totoPool2;
+    totoPool = allocInitPool(80);
+    totoPool2 = allocInitPool(80);
+    initVariable(&toto, totoPool);
+    initVariable(&titi, totoPool);
 
     ::set(&toto, 0);
     ::set(&titi, 666);
@@ -84,10 +83,10 @@ TEST(MultithreadTest, NVariablesOnePool)
 {
     int nbV = 100;
     variable_t variables[nbV];
-    cellpool_t uniquePool;
-    allocInitPool(&uniquePool, nbV*10);
+    cellpool_t *uniquePool;
+    uniquePool = allocInitPool(nbV*10);
     for (int i = 0 ; i < nbV ; ++i) {
-        initVariable(&variables[i], &uniquePool);
+        initVariable(&variables[i], uniquePool);
         ::set(&variables[i], 0);
     }
 
@@ -113,32 +112,32 @@ TEST(MultithreadTest, NVariablesOnePool)
 
 TEST(PoolAlloc, Toto)
 {
-    cellpool_t totoPool;
+    cellpool_t *totoPool;
     variable_t toto, titi;
 
     std::cout << "*** allocInitPool" << std::endl;
-    allocInitPool(&totoPool, 20);
-    dumpPool(&totoPool);
+    totoPool = allocInitPool(20);
+    dumpPool(totoPool);
 
     std::cout << "*** initVariable(toto)" << std::endl;
-    initVariable(&toto, &totoPool);
-    dumpPool(&totoPool);
+    initVariable(&toto, totoPool);
+    dumpPool(totoPool);
 
     std::cout << "*** initVariable(titi)" << std::endl;
-    initVariable(&titi, &totoPool);
-    dumpPool(&totoPool);
+    initVariable(&titi, totoPool);
+    dumpPool(totoPool);
 
     std::cout << "*** set(toto)" << std::endl;
     ::set(&toto, 1);
-    dumpPool(&totoPool);
+    dumpPool(totoPool);
 
     std::cout << "*** set(titi)" << std::endl;
     ::set(&titi, 2);
-    dumpPool(&totoPool);
+    dumpPool(totoPool);
 
     ASSERT_EQ(1, ::get(&toto));
     ASSERT_EQ(2, ::get(&titi));
-    dumpPool(&totoPool);
+    dumpPool(totoPool);
 }
 
 int main(int argc, char **argv) {
