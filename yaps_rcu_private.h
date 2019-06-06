@@ -16,7 +16,7 @@ struct cellpool {
     //cell_ptr_t pool;
     size_t poolSize;
     atomic_size_t next;
-    cell_t pool;
+    cell_t pool[];
 };
 
 #endif // _YAPS_RCU_PRIVATE_H_

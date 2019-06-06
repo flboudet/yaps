@@ -24,7 +24,7 @@ cell_ptr_t alloc(cellpool_t *pool)
     atomic_uint zero = 0;
     do {
         position = atomic_fetch_add(&(pool->next), 1) % pool->poolSize;
-        result = &((&(pool->pool))[position]);
+        result = &(pool->pool[position]);
         zero = 0;
     } while (! atomic_compare_exchange_strong(&(result->rctr), &zero, 1)); // Reader grace period
     return result;
@@ -89,14 +89,14 @@ void initPool(cellpool_t *pool, size_t nmemb)
     pool->poolSize = nmemb;
     pool->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
-        (&pool->pool)[i].rctr = ATOMIC_VAR_INIT(0);
-        (&pool->pool)[i].obsolete = ATOMIC_VAR_INIT(1);
+        pool->pool[i].rctr = ATOMIC_VAR_INIT(0);
+        pool->pool[i].obsolete = ATOMIC_VAR_INIT(1);
     }
 }
 
 cellpool_t *allocInitPool(size_t nmemb)
 {
-    cellpool_t *pool = calloc(1, sizeof(cellpool_t) + (nmemb-1)*sizeof(cell_t));
+    cellpool_t *pool = calloc(1, sizeof(cellpool_t) + nmemb*sizeof(cell_t));
     //cell_ptr_t cell_memory = calloc(nmemb, sizeof(cell_t));
     initPool(pool, nmemb);
     return pool;
@@ -105,6 +105,6 @@ cellpool_t *allocInitPool(size_t nmemb)
 void dumpPool(cellpool_t *pool)
 {
     for (size_t i = 0 ; i < pool->poolSize ; ++i) {
-        printf("dump: pool=%zu, rctr=%d\n", i, (&pool->pool)[i].rctr);
+        printf("dump: pool=%zu, rctr=%d\n", i, pool->pool[i].rctr);
     }
 }
