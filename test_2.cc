@@ -36,58 +36,58 @@ void watchVariable(variable_t *v, int start, int max) {
 
 TEST(MultithreadTest, SingleVariable)
 {
-    variable_t toto;
+    variable_t *toto;
     cellpool_t *totoPool;
     totoPool = allocInitPool(80);
-    initVariable(&toto, totoPool);
+    toto = allocInitVariable(totoPool);
 
-    ::set(&toto, 0);
+    ::set(toto, 0);
 
-    std::thread iterateOnToto(iterateOnVariable, &toto, 0, 1000);
-    std::thread watchToto(watchVariable, &toto, 0, 999);
+    std::thread iterateOnToto(iterateOnVariable, toto, 0, 1000);
+    std::thread watchToto(watchVariable, toto, 0, 999);
     iterateOnToto.join();
     watchToto.join();
 
-    ASSERT_EQ(999, get(&toto));
+    ASSERT_EQ(999, get(toto));
 }
 
 TEST(MultithreadTest, TwoVariables)
 {
-    variable_t toto, titi;
+    variable_t *toto, *titi;
     cellpool_t *totoPool;
     cellpool_t *totoPool2;
     totoPool = allocInitPool(80);
     totoPool2 = allocInitPool(80);
-    initVariable(&toto, totoPool);
-    initVariable(&titi, totoPool);
+    toto = allocInitVariable(totoPool);
+    titi = allocInitVariable(totoPool);
 
-    ::set(&toto, 0);
-    ::set(&titi, 666);
+    ::set(toto, 0);
+    ::set(titi, 666);
 
-    //iterateOnVariable(&toto, 0, 1000);
-    std::thread iterateOnToto(iterateOnVariable, &toto, 0, 1000);
-    std::thread iterateOnTiti(iterateOnVariable, &titi, 2000, 10000);
-    std::thread watchToto(watchVariable, &toto, 0, 999);
-    std::thread watchTiti(watchVariable, &titi, 2000, 9999);
+    //iterateOnVariable(toto, 0, 1000);
+    std::thread iterateOnToto(iterateOnVariable, toto, 0, 1000);
+    std::thread iterateOnTiti(iterateOnVariable, titi, 2000, 10000);
+    std::thread watchToto(watchVariable, toto, 0, 999);
+    std::thread watchTiti(watchVariable, titi, 2000, 9999);
 
     iterateOnToto.join();
     iterateOnTiti.join();
     watchToto.join();
     watchTiti.join();
 
-    ASSERT_EQ(999, get(&toto));
-    ASSERT_EQ(9999, get(&titi));
+    ASSERT_EQ(999, get(toto));
+    ASSERT_EQ(9999, get(titi));
 }
 
 TEST(MultithreadTest, NVariablesOnePool)
 {
     int nbV = 100;
-    variable_t variables[nbV];
+    variable_t *variables[nbV];
     cellpool_t *uniquePool;
     uniquePool = allocInitPool(nbV*10);
     for (int i = 0 ; i < nbV ; ++i) {
-        initVariable(&variables[i], uniquePool);
-        ::set(&variables[i], 0);
+        variables[i] = allocInitVariable(uniquePool);
+        ::set(variables[i], 0);
     }
 
     std::vector<std::thread> iterateThreads;
@@ -95,8 +95,8 @@ TEST(MultithreadTest, NVariablesOnePool)
     for (int i = 0 ; i < nbV ; ++i) {
         int min = i*100;
         int max = min + 1000;
-        iterateThreads.push_back(std::thread(iterateOnVariable, &variables[i], min, max));
-        watchThreads.push_back(std::thread(watchVariable, &variables[i], min, max - 1));
+        iterateThreads.push_back(std::thread(iterateOnVariable, variables[i], min, max));
+        watchThreads.push_back(std::thread(watchVariable, variables[i], min, max - 1));
     }
     for (std::thread &t : iterateThreads)
         t.join();
@@ -106,7 +106,7 @@ TEST(MultithreadTest, NVariablesOnePool)
     for (int i = 0 ; i < nbV ; ++i) {
         int min = i*100;
         int max = min + 1000;
-        ASSERT_EQ(max - 1, get(&variables[i]));
+        ASSERT_EQ(max - 1, get(variables[i]));
     }
 }
 

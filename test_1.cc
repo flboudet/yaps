@@ -14,31 +14,31 @@ uint64_t getTimestamp()
 
 TEST(PerfTest, SetSingleVariable)
 {
-    variable_t toto;
+    variable_t *toto;
     cellpool_t *totoPool;
     totoPool = allocInitPool(80);
-    initVariable(&toto, totoPool);
+    toto = allocInitVariable(totoPool);
     uint64_t initialTime = getTimestamp();
     for (int i = 0 ; i < NB_ITER ; ++i) {
-        ::set(&toto, i);
+        ::set(toto, i);
     }
     uint64_t finalTime = getTimestamp();
-    ASSERT_EQ(NB_ITER - 1, get(&toto));
+    ASSERT_EQ(NB_ITER - 1, get(toto));
     printf("Time per set: %f us\n", (double)(finalTime - initialTime)/NB_ITER);
 }
 
 TEST(PerfTest, GetSingleVariable)
 {
-    variable_t toto;
+    variable_t *toto;
     cellpool_t *totoPool;
     totoPool = allocInitPool(80);
-    initVariable(&toto, totoPool);
-    ::set(&toto, 1);
+    toto = allocInitVariable(totoPool);
+    ::set(toto, 1);
     uint64_t initialTime = getTimestamp();
     for (int i = 0 ; i < NB_ITER ; ++i) {
-        ::get(&toto);
+        ::get(toto);
     }
     uint64_t finalTime = getTimestamp();
-    ASSERT_EQ(1, get(&toto));
+    ASSERT_EQ(1, get(toto));
     printf("Time per get: %f us\n", (double)(finalTime - initialTime)/NB_ITER);
 }
