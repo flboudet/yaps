@@ -113,30 +113,30 @@ TEST(MultithreadTest, NVariablesOnePool)
 TEST(PoolAlloc, Toto)
 {
     cellpool_t *totoPool;
-    variable_t toto, titi;
+    variable_t *toto, *titi;
 
     std::cout << "*** allocInitPool" << std::endl;
     totoPool = allocInitPool(20);
     dumpPool(totoPool);
 
     std::cout << "*** initVariable(toto)" << std::endl;
-    initVariable(&toto, totoPool);
+    toto = allocInitVariable(totoPool);
     dumpPool(totoPool);
 
     std::cout << "*** initVariable(titi)" << std::endl;
-    initVariable(&titi, totoPool);
+    titi = allocInitVariable(totoPool);
     dumpPool(totoPool);
 
     std::cout << "*** set(toto)" << std::endl;
-    ::set(&toto, 1);
+    ::set(toto, 1);
     dumpPool(totoPool);
 
     std::cout << "*** set(titi)" << std::endl;
-    ::set(&titi, 2);
+    ::set(titi, 2);
     dumpPool(totoPool);
 
-    ASSERT_EQ(1, ::get(&toto));
-    ASSERT_EQ(2, ::get(&titi));
+    ASSERT_EQ(1, ::get(toto));
+    ASSERT_EQ(2, ::get(titi));
     dumpPool(totoPool);
 }
 
