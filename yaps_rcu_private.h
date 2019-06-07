@@ -5,7 +5,6 @@
 
 struct cell {
     int value;
-    atomic_bool obsolete;
     atomic_uint rctr;
 };
 
@@ -23,8 +22,8 @@ struct cellpool {
  * Must be mapped in shared memory
  */
 struct variable {
-    atomic_cell_ptr_t c;
-    cellpool_t *pool;
+    cell_t *c;
+    cellpool_t *pool; //TODO: move to a local structure
     atomic_uint mutex;
 };
 

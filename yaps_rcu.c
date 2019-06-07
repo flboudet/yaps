@@ -33,20 +33,20 @@ cell_ptr_t alloc(cellpool_t *pool)
 void set(variable_t *v, int newValue)
 {
     atomic_uint zero = 0;
-    atomic_cell_ptr_t c;
-    atomic_cell_ptr_t nc = alloc(v->pool);
+    cell_t *c;
+    cell_t *nc = alloc(v->pool);
 
     nc->value = newValue;
 
     // per-variable mutex
     TAKE_SPINLOCK(v->mutex);
 
-    atomic_store(&c, v->c); // should be atomic?
+    c = v->c;
     if (c != NULL) {
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
-    atomic_store(&(v->c), nc); // must be atomic
+    v->c = nc;
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
@@ -61,12 +61,12 @@ void set(variable_t *v, int newValue)
 int get(variable_t *v)
 {
     atomic_uint zero = 0;
-    atomic_cell_ptr_t c;
+    cell_t *c;
 
     // per-variable mutex
     TAKE_SPINLOCK(v->mutex);
 
-    atomic_store(&c, v->c); // must be atomic
+    c = v->c;
     atomic_fetch_add(&(c->rctr), 1); // Protect readers
 
     RELEASE_SPINLOCK(v->mutex);
@@ -78,7 +78,7 @@ int get(variable_t *v)
 
 void initVariable(variable_t *v, cellpool_t *pool)
 {
-    v->c = ATOMIC_VAR_INIT(NULL);
+    v->c = NULL;
     v->pool = pool;
     v->mutex = ATOMIC_VAR_INIT(0);
 }
@@ -97,7 +97,6 @@ void initPool(cellpool_t *pool, size_t nmemb)
     pool->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
         pool->pool[i].rctr = ATOMIC_VAR_INIT(0);
-        pool->pool[i].obsolete = ATOMIC_VAR_INIT(1);
     }
 }
 
