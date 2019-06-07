@@ -19,11 +19,7 @@ struct cellpool;
 
 typedef struct cellpool cellpool_t;
 
-struct variable {
-    atomic_cell_ptr_t c;
-    cellpool_t *pool;
-    atomic_uint mutex;
-};
+struct variable;
 
 typedef struct variable variable_t;
 

@@ -19,4 +19,13 @@ struct cellpool {
     cell_t pool[];
 };
 
+/**
+ * Must be mapped in shared memory
+ */
+struct variable {
+    atomic_cell_ptr_t c;
+    cellpool_t *pool;
+    atomic_uint mutex;
+};
+
 #endif // _YAPS_RCU_PRIVATE_H_
