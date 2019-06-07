@@ -83,6 +83,13 @@ void initVariable(variable_t *v, cellpool_t *pool)
     v->mutex = ATOMIC_VAR_INIT(0);
 }
 
+variable_t *allocInitVariable(cellpool_t *pool)
+{
+    variable_t *v = calloc(1, sizeof(variable_t));
+    initVariable(v, pool);
+    return v;
+}
+
 void initPool(cellpool_t *pool, size_t nmemb)
 {
     //pool->pool = cell_memory;
