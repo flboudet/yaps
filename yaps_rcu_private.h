@@ -21,10 +21,14 @@ struct cellpool {
 /**
  * Must be mapped in shared memory
  */
-struct variable {
-    cellpool_t *pool; //TODO: move to a local structure
+struct variable_private {
     atomic_uint mutex;
     size_t c;
+};
+
+struct variable {
+    cellpool_t *pool; //TODO: move to a local structure
+    struct variable_private *_p;
 };
 
 #endif // _YAPS_RCU_PRIVATE_H_

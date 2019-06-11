@@ -35,6 +35,7 @@ size_t alloc(cellpool_t *pool)
 void set(variable_t *v, int newValue)
 {
     atomic_uint zero = 0;
+    struct variable_private *vp = v->_p;
     cell_t *c;
     size_t nci = alloc(v->pool);
     cell_t *nc = &(v->pool->pool[nci]);//alloc(v->pool);
@@ -42,19 +43,19 @@ void set(variable_t *v, int newValue)
     nc->value = newValue;
 
     // per-variable mutex
-    TAKE_SPINLOCK(v->mutex);
+    TAKE_SPINLOCK(vp->mutex);
 
-    if (v->c != CELL_UNDEF) {
-        c = &(v->pool->pool[v->c]); // TODO: create macro
+    if (vp->c != CELL_UNDEF) {
+        c = &(v->pool->pool[vp->c]); // TODO: create macro
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
-    v->c = nci;
+    vp->c = nci;
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
 
-    RELEASE_SPINLOCK(v->mutex);
+    RELEASE_SPINLOCK(vp->mutex);
 
     // Dispatch to notified clients
     // Release new value
@@ -64,32 +65,36 @@ void set(variable_t *v, int newValue)
 int get(variable_t *v)
 {
     atomic_uint zero = 0;
+    struct variable_private *vp = v->_p;
     cell_t *c;
 
     // per-variable mutex
-    TAKE_SPINLOCK(v->mutex);
+    TAKE_SPINLOCK(vp->mutex);
 
-    c = &(v->pool->pool[v->c]); // TODO: create macro
+    c = &(v->pool->pool[vp->c]); // TODO: create macro
     atomic_fetch_add(&(c->rctr), 1); // Protect readers
 
-    RELEASE_SPINLOCK(v->mutex);
+    RELEASE_SPINLOCK(vp->mutex);
 
     int result = c->value;
     atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     return result;
 }
 
-void initVariable(variable_t *v, cellpool_t *pool)
+void initVariable(struct variable_private *vp,
+                  cellpool_t *pool)
 {
-    v->c = CELL_UNDEF;
-    v->pool = pool;
-    v->mutex = ATOMIC_VAR_INIT(0);
+    vp->c = CELL_UNDEF;
+    vp->mutex = ATOMIC_VAR_INIT(0);
 }
 
 variable_t *allocInitVariable(cellpool_t *pool)
 {
     variable_t *v = calloc(1, sizeof(variable_t));
-    initVariable(v, pool);
+    struct variable_private *vp = calloc(1, sizeof(struct variable_private));
+    v->pool = pool;
+    v->_p = vp;
+    initVariable(vp, pool);
     return v;
 }
 
