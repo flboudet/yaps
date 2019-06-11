@@ -18,6 +18,9 @@
         mutex = 0;                \
     }
 
+#define GET_VARIABLE_POOL_CELL(v, index) \
+    &(v->pool->pool[index])
+
 size_t alloc(cellpool_t *pool)
 {
     size_t position;
@@ -38,7 +41,7 @@ void set(variable_t *v, int newValue)
     struct variable_private *vp = v->_p;
     cell_t *c;
     size_t nci = alloc(v->pool);
-    cell_t *nc = &(v->pool->pool[nci]);//alloc(v->pool);
+    cell_t *nc = GET_VARIABLE_POOL_CELL(v, nci);
 
     nc->value = newValue;
 
@@ -46,7 +49,7 @@ void set(variable_t *v, int newValue)
     TAKE_SPINLOCK(vp->mutex);
 
     if (vp->c != CELL_UNDEF) {
-        c = &(v->pool->pool[vp->c]); // TODO: create macro
+        c = GET_VARIABLE_POOL_CELL(v, vp->c);
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }

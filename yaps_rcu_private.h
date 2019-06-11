@@ -27,7 +27,7 @@ struct variable_private {
 };
 
 struct variable {
-    cellpool_t *pool; //TODO: move to a local structure
+    cellpool_t *pool;
     struct variable_private *_p;
 };
 
