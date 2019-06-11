@@ -3,7 +3,9 @@
 #include "yaps_rcu_private.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
+#define CELL_UNDEF SSIZE_MAX
 #define TAKE_SPINLOCK(mutex) {                               \
         atomic_uint zero = 0;                                \
         while (! atomic_compare_exchange_strong(&(mutex),    \
@@ -16,7 +18,7 @@
         mutex = 0;                \
     }
 
-cell_ptr_t alloc(cellpool_t *pool)
+size_t alloc(cellpool_t *pool)
 {
     size_t position;
     _Bool trueBool = 1;
@@ -27,26 +29,27 @@ cell_ptr_t alloc(cellpool_t *pool)
         result = &(pool->pool[position]);
         zero = 0;
     } while (! atomic_compare_exchange_strong(&(result->rctr), &zero, 1)); // Reader grace period
-    return result;
+    return position;
 }
 
 void set(variable_t *v, int newValue)
 {
     atomic_uint zero = 0;
     cell_t *c;
-    cell_t *nc = alloc(v->pool);
+    size_t nci = alloc(v->pool);
+    cell_t *nc = &(v->pool->pool[nci]);//alloc(v->pool);
 
     nc->value = newValue;
 
     // per-variable mutex
     TAKE_SPINLOCK(v->mutex);
 
-    c = v->c;
-    if (c != NULL) {
+    if (v->c != CELL_UNDEF) {
+        c = &(v->pool->pool[v->c]); // TODO: create macro
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
-    v->c = nc;
+    v->c = nci;
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
@@ -66,7 +69,7 @@ int get(variable_t *v)
     // per-variable mutex
     TAKE_SPINLOCK(v->mutex);
 
-    c = v->c;
+    c = &(v->pool->pool[v->c]); // TODO: create macro
     atomic_fetch_add(&(c->rctr), 1); // Protect readers
 
     RELEASE_SPINLOCK(v->mutex);
@@ -78,7 +81,7 @@ int get(variable_t *v)
 
 void initVariable(variable_t *v, cellpool_t *pool)
 {
-    v->c = NULL;
+    v->c = CELL_UNDEF;
     v->pool = pool;
     v->mutex = ATOMIC_VAR_INIT(0);
 }
