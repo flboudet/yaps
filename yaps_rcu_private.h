@@ -23,7 +23,8 @@ struct cellpool {
  */
 struct variable_private {
     atomic_uint mutex;
-    size_t c;
+    size_t cSize;
+    size_t c[];
 };
 
 struct variable {

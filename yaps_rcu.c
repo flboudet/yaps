@@ -48,12 +48,12 @@ void set(variable_t *v, int newValue)
     // per-variable mutex
     TAKE_SPINLOCK(vp->mutex);
 
-    if (vp->c != CELL_UNDEF) {
-        c = GET_VARIABLE_POOL_CELL(v, vp->c);
+    if (vp->c[0] != CELL_UNDEF) {
+        c = GET_VARIABLE_POOL_CELL(v, vp->c[0]);
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
-    vp->c = nci;
+    vp->c[0] = nci;
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
@@ -74,7 +74,7 @@ int get(variable_t *v)
     // per-variable mutex
     TAKE_SPINLOCK(vp->mutex);
 
-    c = &(v->pool->pool[vp->c]); // TODO: create macro
+    c = GET_VARIABLE_POOL_CELL(v, vp->c[0]);
     atomic_fetch_add(&(c->rctr), 1); // Protect readers
 
     RELEASE_SPINLOCK(vp->mutex);
@@ -85,19 +85,23 @@ int get(variable_t *v)
 }
 
 void initVariable(struct variable_private *vp,
-                  cellpool_t *pool)
+                  cellpool_t *pool, size_t nmemb)
 {
-    vp->c = CELL_UNDEF;
+    vp->cSize = nmemb;
+    for (size_t i = 0 ; i < nmemb ; ++i) {
+        vp->c[i] = CELL_UNDEF;
+    }
     vp->mutex = ATOMIC_VAR_INIT(0);
 }
 
 variable_t *allocInitVariable(cellpool_t *pool)
 {
+    size_t nmemb = 1;
     variable_t *v = calloc(1, sizeof(variable_t));
-    struct variable_private *vp = calloc(1, sizeof(struct variable_private));
+    struct variable_private *vp = calloc(1, sizeof(struct variable_private) + nmemb*sizeof(size_t));
     v->pool = pool;
     v->_p = vp;
-    initVariable(vp, pool);
+    initVariable(vp, pool, nmemb);
     return v;
 }
 
