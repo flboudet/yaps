@@ -17,7 +17,7 @@ TEST(PerfTest, SetSingleVariable)
     variable_t *toto;
     cellpool_t *totoPool;
     totoPool = allocInitPool(80);
-    toto = allocInitVariable(totoPool);
+    toto = allocInitVariable(totoPool, 1);
     uint64_t initialTime = getTimestamp();
     for (int i = 0 ; i < NB_ITER ; ++i) {
         ::set(toto, i);
@@ -32,7 +32,7 @@ TEST(PerfTest, GetSingleVariable)
     variable_t *toto;
     cellpool_t *totoPool;
     totoPool = allocInitPool(80);
-    toto = allocInitVariable(totoPool);
+    toto = allocInitVariable(totoPool, 1);
     ::set(toto, 1);
     uint64_t initialTime = getTimestamp();
     for (int i = 0 ; i < NB_ITER ; ++i) {
