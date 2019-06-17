@@ -42,18 +42,19 @@ void set(variable_t *v, int newValue)
     cell_t *c;
     size_t nci = alloc(v->pool);
     cell_t *nc = GET_VARIABLE_POOL_CELL(v, nci);
+    size_t cIndex = atomic_fetch_add(&(vp->next), 1) % vp->cSize;
 
     nc->value = newValue;
 
     // per-variable mutex
     TAKE_SPINLOCK(vp->mutex);
 
-    if (vp->c[0] != CELL_UNDEF) {
-        c = GET_VARIABLE_POOL_CELL(v, vp->c[0]);
+    if (vp->c[cIndex] != CELL_UNDEF) {
+        c = GET_VARIABLE_POOL_CELL(v, vp->c[cIndex]);
         // Mark as released
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
-    vp->c[0] = nci;
+    vp->c[vp->next % vp->cSize] = nci;
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
@@ -88,20 +89,20 @@ void initVariable(struct variable_private *vp,
                   cellpool_t *pool, size_t nmemb)
 {
     vp->cSize = nmemb;
+    vp->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
         vp->c[i] = CELL_UNDEF;
     }
     vp->mutex = ATOMIC_VAR_INIT(0);
 }
 
-variable_t *allocInitVariable(cellpool_t *pool)
+variable_t *allocInitVariable(cellpool_t *pool, size_t depth)
 {
-    size_t nmemb = 1;
     variable_t *v = calloc(1, sizeof(variable_t));
-    struct variable_private *vp = calloc(1, sizeof(struct variable_private) + nmemb*sizeof(size_t));
+    struct variable_private *vp = calloc(1, sizeof(struct variable_private) + depth*sizeof(size_t));
     v->pool = pool;
     v->_p = vp;
-    initVariable(vp, pool, nmemb);
+    initVariable(vp, pool, depth);
     return v;
 }
 

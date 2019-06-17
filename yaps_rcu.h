@@ -33,7 +33,7 @@ int get(variable_t *v);
 void initPool(cellpool_t *pool, size_t nmemb);
 cellpool_t *allocInitPool(size_t nmemb);
 //void initVariable(variable_t *v, cellpool_t *pool);
-variable_t *allocInitVariable(cellpool_t *pool);
+variable_t *allocInitVariable(cellpool_t *pool, size_t depth);
 
 void dumpPool(cellpool_t *pool);
 
