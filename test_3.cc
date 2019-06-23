@@ -7,31 +7,27 @@
 void parentProcess(void *shared_mem)
 {
     char *shared_mem_pos = (char *)shared_mem;
-    cell_ptr_t *cell_memory = (cell_ptr_t *)shared_mem;
-    shared_mem_pos += (sizeof(cell_t) * 80);
-    cellpool_t *totoPool = (cellpool_t *)shared_mem_pos;
-    shared_mem_pos += sizeof(cellpool_t);
-    variable_t *toto = (variable_t *)shared_mem_pos;
-
-    initPool(totoPool, cell_memory, 80);
-    initVariable(toto, totoPool);
-
+    cellpool_t *totoPool = (cellpool_t *)shared_mem;
+    initPool(totoPool, 80);
+    shared_mem_pos += pool_getMemSizeOf(totoPool);
+    variable_private *totoVp = (variable_private *)shared_mem_pos;
+    variable_t *toto = mapVariable(totoPool, totoVp, 1);
+    initVariable(totoVp, totoPool, 1);
     ::set(toto, 31415);
 }
 
 void childProcess(void *shared_mem)
 {
     char *shared_mem_pos = (char *)shared_mem;
-    cell_ptr_t *cell_memory = (cell_ptr_t *)shared_mem;
-    shared_mem_pos += (sizeof(cell_t) * 80);
     cellpool_t *totoPool = (cellpool_t *)shared_mem_pos;
-    shared_mem_pos += sizeof(cellpool_t);
-    variable_t *toto = (variable_t *)shared_mem_pos;
+    shared_mem_pos += pool_getMemSizeOf(totoPool);
+    variable_private *totoVp = (variable_private *)shared_mem_pos;
+    variable_t *toto = mapVariable(totoPool, totoVp, 1);
 
     sleep(1);
     printf("Bla bla\n");
     printf("toto val: %d\n", get(toto));
-    ASSERT_EQ(31416, get(toto));
+    ASSERT_EQ(31415, get(toto));
 }
 
 TEST(MultiprocessTest, SingleVariable)
