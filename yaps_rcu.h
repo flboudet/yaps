@@ -37,10 +37,18 @@ size_t pool_getMemSizeOf(cellpool_t *pool);
 void dumpPool(cellpool_t *pool);
 
 // Variable API
-//void initVariable(variable_t *v, cellpool_t *pool);
-void initVariable(struct variable_private *vp,
-                  cellpool_t *pool, size_t nmemb);
-variable_t *mapVariable(cellpool_t *pool, void *vmemory, size_t depth);
+/**
+ * \brief Initialize a variable.
+ */
+void initVariable(variable_t *v, size_t nmemb);
+/**
+ * \brief Create a variable_t pointing at a known variable memory.
+ * The variable is not initialized by this function.
+ */
+variable_t *mapVariable(cellpool_t *pool, void *vmemory);
+/**
+ * \brief Create a newly allocated and initialized a variable
+ */
 variable_t *allocInitVariable(cellpool_t *pool, size_t depth);
 
 

@@ -85,9 +85,10 @@ int get(variable_t *v)
     return result;
 }
 
-void initVariable(struct variable_private *vp,
-                  cellpool_t *pool, size_t nmemb)
+void initVariable(variable_t *v,
+                  size_t nmemb)
 {
+    struct variable_private *vp = v->_p;
     vp->cSize = nmemb;
     vp->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
@@ -96,7 +97,7 @@ void initVariable(struct variable_private *vp,
     vp->mutex = ATOMIC_VAR_INIT(0);
 }
 
-variable_t *mapVariable(cellpool_t *pool, void *vmemory, size_t depth)
+variable_t *mapVariable(cellpool_t *pool, void *vmemory)
 {
     variable_t *v = calloc(1, sizeof(variable_t));
     v->pool = pool;
@@ -107,8 +108,8 @@ variable_t *mapVariable(cellpool_t *pool, void *vmemory, size_t depth)
 variable_t *allocInitVariable(cellpool_t *pool, size_t depth)
 {
     struct variable_private *vp = calloc(1, sizeof(struct variable_private) + depth*sizeof(size_t));
-    variable_t *v = mapVariable(pool, vp, depth);
-    initVariable(vp, pool, depth);
+    variable_t *v = mapVariable(pool, vp);
+    initVariable(v, depth);
     return v;
 }
 

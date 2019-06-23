@@ -11,8 +11,8 @@ void parentProcess(void *shared_mem)
     initPool(totoPool, 80);
     shared_mem_pos += pool_getMemSizeOf(totoPool);
     variable_private *totoVp = (variable_private *)shared_mem_pos;
-    variable_t *toto = mapVariable(totoPool, totoVp, 1);
-    initVariable(totoVp, totoPool, 1);
+    variable_t *toto = mapVariable(totoPool, totoVp);
+    initVariable(toto, 1);
     ::set(toto, 31415);
 }
 
@@ -22,7 +22,7 @@ void childProcess(void *shared_mem)
     cellpool_t *totoPool = (cellpool_t *)shared_mem_pos;
     shared_mem_pos += pool_getMemSizeOf(totoPool);
     variable_private *totoVp = (variable_private *)shared_mem_pos;
-    variable_t *toto = mapVariable(totoPool, totoVp, 1);
+    variable_t *toto = mapVariable(totoPool, totoVp);
 
     sleep(1);
     printf("Bla bla\n");
