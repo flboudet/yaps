@@ -33,4 +33,9 @@ struct variable {
     struct variable_private *_p;
 };
 
+struct reader {
+    variable_t *v;
+    size_t pos;
+};
+
 #endif // _YAPS_RCU_PRIVATE_H_

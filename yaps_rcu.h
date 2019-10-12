@@ -20,8 +20,10 @@ struct cellpool;
 typedef struct cellpool cellpool_t;
 
 struct variable;
-struct variable_private;
 typedef struct variable variable_t;
+
+struct reader;
+typedef struct reader reader_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +53,8 @@ variable_t *mapVariable(cellpool_t *pool, void *vmemory);
  */
 variable_t *allocInitVariable(cellpool_t *pool, size_t depth);
 
-
+// Reader API
+reader_t *allocInitReader(variable_t *v);
 
 #ifdef __cplusplus
 }
