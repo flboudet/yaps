@@ -39,9 +39,9 @@ void set(variable_t *v, int newValue)
 {
     atomic_uint zero = 0;
     struct variable_private *vp = v->_p;
-    cell_t *c;
-    size_t nci = alloc(v->pool);
-    cell_t *nc = GET_VARIABLE_POOL_CELL(v, nci);
+    cell_t *c; // Current cell
+    size_t nci = alloc(v->pool); // Next cell index
+    cell_t *nc = GET_VARIABLE_POOL_CELL(v, nci); // Next cell
     size_t cIndex = atomic_fetch_add(&(vp->next), 1) % vp->cSize;
 
     nc->value = newValue;
@@ -55,6 +55,7 @@ void set(variable_t *v, int newValue)
         atomic_fetch_sub(&(c->rctr), 1); // End of protected section
     }
     vp->c[vp->next % vp->cSize] = nci;
+    atomic_store(&(vp->cur), cIndex);
 
     // Prevent new value from being released
     atomic_fetch_add(&(nc->rctr), 1);
@@ -90,6 +91,7 @@ void initVariable(variable_t *v,
 {
     struct variable_private *vp = v->_p;
     vp->cSize = nmemb;
+    vp->cur = ATOMIC_VAR_INIT(0);
     vp->next = ATOMIC_VAR_INIT(0);
     for (size_t i = 0 ; i < nmemb ; ++i) {
         vp->c[i] = CELL_UNDEF;
@@ -141,4 +143,34 @@ void dumpPool(cellpool_t *pool)
     for (size_t i = 0 ; i < pool->poolSize ; ++i) {
         printf("dump: pool=%zu, rctr=%d\n", i, pool->pool[i].rctr);
     }
+}
+
+reader_t *allocInitReader(variable_t *v)
+{
+    reader_t *reader = calloc(1, sizeof(reader_t));
+    struct variable_private *vp = v->_p;
+    reader->v = v;
+    reader->pos = vp->cur;
+    return reader;
+}
+
+int reader_get(reader_t *r)
+{
+    variable_t *v = r->v;
+    atomic_uint zero = 0;
+    struct variable_private *vp = v->_p;
+    cell_t *c;
+
+    // per-variable mutex
+    TAKE_SPINLOCK(vp->mutex);
+
+    c = GET_VARIABLE_POOL_CELL(v, vp->c[r->pos % vp->cSize]);
+    atomic_fetch_add(&(c->rctr), 1); // Protect readers
+
+    RELEASE_SPINLOCK(vp->mutex);
+
+    int result = c->value;
+    atomic_fetch_sub(&(c->rctr), 1); // End of protected section
+    r->pos++;
+    return result;
 }

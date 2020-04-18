@@ -24,7 +24,7 @@ struct cellpool {
 struct variable_private {
     atomic_uint mutex;
     size_t cSize;
-    atomic_size_t next;
+    atomic_size_t cur, next;
     size_t c[];
 };
 

@@ -55,6 +55,7 @@ variable_t *allocInitVariable(cellpool_t *pool, size_t depth);
 
 // Reader API
 reader_t *allocInitReader(variable_t *v);
+int reader_get(reader_t *r);
 
 #ifdef __cplusplus
 }
