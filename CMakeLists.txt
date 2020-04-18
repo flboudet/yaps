@@ -7,6 +7,7 @@ add_executable(yaps yaps_rcu.c
                test_1.cc
                test_2.cc
                test_3.cc
+               test_history_reader.cc
               )
 
 target_include_directories(yaps PRIVATE ${GTEST_INCLUDE_DIRS})
